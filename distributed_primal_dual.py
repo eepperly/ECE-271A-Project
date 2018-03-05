@@ -18,7 +18,7 @@ class DistributedProblem(object):
         assert self.size == len(self.constraint_matrices)
         assert self.size == len(self.graph)
         
-    def solve(self, num_iters, initial_primal_guess, initial_dual_guess, gamma, taus, kappas):
+    def solve(self, num_iters, initial_primal_guess, initial_dual_guess, gamma, taus, kappas, debug_output=False):
 
         assert self.size == len(taus)
         assert self.size == len(kappas)
@@ -30,25 +30,43 @@ class DistributedProblem(object):
         new_s = []
 
         dual_history = [ dual ]
+        primal_history = [ primal ]
 
+        if debug_output:
+            print "Solving distributed problem"
+            print "Gamma", gamma
+            print "Taus", " ".join(map(str, taus))
+            print "Kappas", " ".join(map(str, kappas))
+            print
+        
         for _ in range(num_iters):
 
             new_primal = []
             new_dual = []
+
+            if debug_output:
+                print "Step", _
+                print "----------"
             
             for i in range(self.size):
-                # # Print outs for debugging
-                # print "Primal", primal[i].shape
-                # print primal[i]
 
-                # print "Smooth Function Gradient", self.smooth_funcs[i].gradient(primal[i]).shape
-                # print self.smooth_funcs[i].gradient(primal[i])
+                if debug_output:
+                    print "Agent", i
 
-                # print "Constraint Matrix", self.constraint_matrices[i].shape
-                # print self.constraint_matrices[i]
+                    print "Primal", primal[i].shape
+                    print primal[i]
 
-                # print "Dual", dual[i].shape
-                # print dual[i]
+                    print "Smooth Function Gradient", self.smooth_funcs[i].gradient(primal[i]).shape
+                    print self.smooth_funcs[i].gradient(primal[i])
+
+                    print "Constraint Matrix", self.constraint_matrices[i].shape
+                    print self.constraint_matrices[i]
+
+                    print "Constraint Vector", self.constraint_vectors[i].shape
+                    print self.constraint_vectors[i]
+                    
+                    print "Dual", dual[i].shape
+                    print dual[i]
                 
                 new_primal.append( self.non_smooth_funcs[i].prox(primal[i] - taus[i] * (self.smooth_funcs[i].gradient(primal[i]) + self.constraint_matrices[i].transpose()*dual[i]), scaling=taus[i]) )
                 
@@ -56,18 +74,31 @@ class DistributedProblem(object):
                 for j in self.graph.adjacent_to(i):
                     p += s[j] - s[i]
 
-                new_dual.append( self.cone.projectPolar( dual[i] + kappas[i]*(self.constraint_matrices[i]*(2*new_primal[i] - primal[i]) - self.constraint_vectors[i] + gamma*p)) )
+                if debug_output:
+                    print "p", p.shape
+                    print p
+                    
+                # print "New dual = ", dual[i], "+", kappas[i], "* (", self.constraint_matrices[i], "+ 2 * ", new_primal[i], "-", primal[i], ") -", self.constraint_vectors, "+", gamma, "*", p
 
-                new_s_value = 2 * new_dual[i]
+                new_dual.append( self.cone.projectPolar( dual[i] + kappas[i]*(self.constraint_matrices[i]*(2*new_primal[i] - primal[i]) - self.constraint_vectors[i] + gamma*p) ) )
 
-                for j in range(len(dual_history)):
-                    new_s_value += dual_history[j][i]
+                # new_s_value = 2 * new_dual[i]
 
-                new_s.append( new_s_value )
+                # for j in range(len(dual_history)):
+                #     new_s_value += dual_history[j][i]
+
+                new_s.append( s[i] + 2*new_dual[i] - dual[i] )
+
+                if debug_output:
+                    print
+
+            if debug_output:
+                print
                 
+            primal_history.append(new_primal)
             primal = new_primal
             dual_history.append(new_dual)
             dual = new_dual
             s = new_s
 
-        return primal, dual
+        return primal, dual, primal_history, dual_history
