@@ -67,6 +67,9 @@ class DistributedProblem(object):
                     
                     print "Dual", dual[i].shape
                     print dual[i]
+
+                    print "s", s[i].shape
+                    print s[i]
                 
                 new_primal.append( self.non_smooth_funcs[i].prox(primal[i] - taus[i] * (self.smooth_funcs[i].gradient(primal[i]) + self.constraint_matrices[i].transpose()*dual[i]), scaling=taus[i]) )
                 
@@ -87,9 +90,15 @@ class DistributedProblem(object):
                 # for j in range(len(dual_history)):
                 #     new_s_value += dual_history[j][i]
 
-                new_s.append( s[i] + 2*new_dual[i] - dual[i] )
-
+                new_s.append( s[i] + 2.0*new_dual[i] - dual[i] )
+                
                 if debug_output:
+                    print "new_dual", new_dual[i].shape
+                    print new_dual[i]
+                
+                    print "new_s", new_s[i].shape
+                    print new_s[i]
+
                     print
 
             if debug_output:
@@ -100,5 +109,6 @@ class DistributedProblem(object):
             dual_history.append(new_dual)
             dual = new_dual
             s = new_s
+            new_s = []
 
         return primal, dual, primal_history, dual_history

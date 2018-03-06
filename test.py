@@ -7,35 +7,27 @@ from basis_pursuit import basis_pursuit
 import cvxpy
 import scipy
 
-debug_output = True
+debug_output = False
 default_steps = 4
 
 #R1 = np.matrix('1 2;3 4')
 #R2 = np.matrix('1 2 3;4 5 6')
 #R3 = np.matrix('1 2 3 4;5 6 7 8')
 
-#R1 = np.matrix(np.random.rand(2,2))
-#R2 = np.matrix(np.random.rand(2,3))
-#R3 = np.matrix(np.random.rand(2,4))
+R1 = np.matrix(np.random.rand(2,2))
+R2 = np.matrix(np.random.rand(2,3))
+R3 = np.matrix(np.random.rand(2,4))
 
-#matrices = [R1, R2, R3]
+r = np.random.rand(2,1)
 
-r = np.matrix('1;1')
-
-R1 = np.matrix('1;0')
-R2 = np.matrix('0;1')
-
-matrices = [R1, R2]
+matrices = [R1, R2, R3]
 
 vector = r
 
-# graph = Graph(3)
-# graph.add_edge(0,1)
-# graph.add_edge(0,2)
-# graph.add_edge(1,2)
-
-graph = Graph(2)
+graph = Graph(3)
 graph.add_edge(0,1)
+graph.add_edge(0,2)
+graph.add_edge(1,2)
 
 import sys
 if len(sys.argv) > 1:
