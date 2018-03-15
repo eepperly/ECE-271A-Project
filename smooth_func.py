@@ -36,3 +36,14 @@ class SmoothZeroFunc(SmoothFunc):
 
     def gradient( self, vec ):
         return np.zeros( (self.output_size, 1) )
+
+class SmoothOneNorm(SmoothFunc):
+
+    def __init__( self, output_size ):
+        self.output_size = output_size
+
+    def evaluate( self, vec ):
+        return np.linalg.norm( vec, ord=1 )
+
+    def gradient( self, vec ):
+        return np.sign(vec)

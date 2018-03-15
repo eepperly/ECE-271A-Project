@@ -39,6 +39,11 @@ class PolyhedralCone(Cone):
     def __init__(self, matrix):
         self.matrix = matrix # polyhedral cone refers to the set of all x such that matrix*x >= 0
 
+    @staticmethod
+    def getPositiveCone(self, size):
+        import scipy
+        return PolyhedralCone(scipy.sparse.eye(size))
+        
     def isIn( self, vec ):
         return np.all( self.matrix * vec >= 0 )
 

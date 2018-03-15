@@ -47,30 +47,38 @@ class DistributedProblem(object):
             if debug_output:
                 print "Step", _
                 print "----------"
+                print
             
             for i in range(self.size):
 
                 if debug_output:
                     print "Agent", i
+                    print
 
                     print "Primal", primal[i].shape
                     print primal[i]
+                    print
 
                     print "Smooth Function Gradient", self.smooth_funcs[i].gradient(primal[i]).shape
                     print self.smooth_funcs[i].gradient(primal[i])
+                    print
 
                     print "Constraint Matrix", self.constraint_matrices[i].shape
                     print self.constraint_matrices[i]
+                    print
 
                     print "Constraint Vector", self.constraint_vectors[i].shape
                     print self.constraint_vectors[i]
+                    print
                     
                     print "Dual", dual[i].shape
                     print dual[i]
+                    print
 
                     print "s", s[i].shape
                     print s[i]
-                
+                    print
+
                 new_primal.append( self.non_smooth_funcs[i].prox(primal[i] - taus[i] * (self.smooth_funcs[i].gradient(primal[i]) + self.constraint_matrices[i].transpose()*dual[i]), scaling=taus[i]) )
                 
                 p = 0.0
@@ -80,6 +88,7 @@ class DistributedProblem(object):
                 if debug_output:
                     print "p", p.shape
                     print p
+                    print
                     
                 # print "New dual = ", dual[i], "+", kappas[i], "* (", self.constraint_matrices[i], "+ 2 * ", new_primal[i], "-", primal[i], ") -", self.constraint_vectors, "+", gamma, "*", p
 
@@ -93,11 +102,17 @@ class DistributedProblem(object):
                 new_s.append( s[i] + 2.0*new_dual[i] - dual[i] )
                 
                 if debug_output:
+                    print "new_primal", new_primal[i].shape
+                    print new_primal
+                    print
+                    
                     print "new_dual", new_dual[i].shape
                     print new_dual[i]
+                    print
                 
                     print "new_s", new_s[i].shape
                     print new_s[i]
+                    print
 
                     print
 

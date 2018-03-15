@@ -22,7 +22,7 @@ class NonSmoothZeroFunc(NonSmoothFunc):
         return 0.0
 
     def prox( self, vec, scaling=1.0 ):
-        return var
+        return vec
 
 class NonSmoothOneNorm(NonSmoothFunc):
 
@@ -30,11 +30,13 @@ class NonSmoothOneNorm(NonSmoothFunc):
         return np.linalg.norm(vec, ord=1)
 
     def prox( self, vec, scaling=1.0 ):
-        var = cvxpy.Variable(len(vec))
-        objective = cvxpy.Minimize( scaling*cvxpy.norm(var, 1) + 0.5* cvxpy.sum_squares(vec - var) )
-        prob = cvxpy.Problem( objective )
+        return np.multiply( np.sign(vec), np.maximum( np.abs(vec) - scaling*np.ones(vec.shape), np.zeros(vec.shape) ) )
+        
+        # var = cvxpy.Variable(len(vec))
+        # objective = cvxpy.Minimize( scaling*cvxpy.norm(var, 1) + 0.5* cvxpy.sum_squares(vec - var) )
+        # prob = cvxpy.Problem( objective )
 
-        prob.solve()
-        assert prob.status == cvxpy.OPTIMAL
+        # prob.solve()
+        # assert prob.status == cvxpy.OPTIMAL
 
-        return var.value
+        # return var.value
