@@ -57,10 +57,11 @@ def read_array( fName ):
     return read_matrix( fName, return_as_array=True )
 
 def write_array( fName, array ):
-    
-    with open(fName, "w") as write_file:
-        for i in range(array.shape[0]):
-            write_file.write(",".join(map(str, list(array[i,:])))+"\n")
+
+    np.savetxt( fName, array, delimiter="," )
+    # with open(fName, "w") as write_file:
+    #     for i in range(array.shape[0]):
+    #         write_file.write(",".join(map(str, array[i,:].flatten().tolist()[0]))+"\n")
             
 
 def read_number( fName ):

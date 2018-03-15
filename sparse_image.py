@@ -20,6 +20,8 @@ parser.add_argument("--gamma", help="a numerical parameter", type=float, default
 parser.add_argument("--solver_param", help="a numerical parameter", type=float, default=1.0)
 parser.add_argument("--image_file", help="which file to load for image", type=str, default="smile.dat")
 parser.add_argument("--graph_density", help="fraction of possible edges that will be filled", type=float, default=0.2)
+parser.add_argument("--measurement_type", help="type of measurement, either 'line' or 'circle'", type=str, default="circle")
+parser.add_argument("--circle_radius", help="radius of circle for circular measurement", type=float, default=4.0)
 
 args = parser.parse_args()
 
@@ -36,8 +38,10 @@ if gamma is None:
     gamma = 2*float(num_agents) / int(graph_density * num_agents * (num_agents-1)/2)
 
 solver_param = args.solver_param
+measurement_type = args.measurement_type
+radius = args.circle_radius
 
-non_smooth_one_norm = True
+assert measurement_type in ["circle", "line"]
 
 # Set up problem
 
@@ -58,35 +62,54 @@ measurement_rows = []
 measurement_cols = []
 intensities = []
 
-for i in range(image.shape[0]):
-
-    measurement_rows += image.shape[1] * [measurements_made]
-    measurement_cols += map(array_index_to_vec_index, [(i,j) for j in range(image.shape[1])])
-    intensities.append( np.sum(image[i,:]) )
-    measurements_made += 1
+if measurement_type is "line":
+    for i in range(image.shape[0]):
+        
+        measurement_rows += image.shape[1] * [measurements_made]
+        measurement_cols += map(array_index_to_vec_index, [(i,j) for j in range(image.shape[1])])
+        intensities.append( np.sum(image[i,:]) )
+        measurements_made += 1
 
 while measurements_made < num_measurements:
 
     print float(measurements_made) / num_measurements
-    
-    # Generate line
-    x_intercept = image.shape[1] * np.random.rand()
-    y_intercept = image.shape[0] * np.random.rand()
-    top_or_bot = np.random.randint(2)
-    left_or_right = np.random.randint(2)
-    slope = (top_or_bot * image.shape[0] - y_intercept) / (x_intercept - left_or_right * image.shape[1])
-    intercept = y_intercept if not left_or_right else y_intercept - slope * image.shape[1]
 
-    # Get measurement
     intensity = 0
-
+    
     from math import floor, ceil
-    for j in range(image.shape[1]):
-        for i in range(int(floor(slope*j+intercept)), int(ceil(slope*(j+1)+intercept))+1):
-            if 0 <= i and i < image.shape[0]:
-                measurement_rows.append( measurements_made )
-                measurement_cols.append( array_index_to_vec_index((i,j)) )
-                intensity += image[i][j]
+    if measurement_type is "line":
+        # Generate line
+        x_intercept = image.shape[1] * np.random.rand()
+        y_intercept = image.shape[0] * np.random.rand()
+        top_or_bot = np.random.randint(2)
+        left_or_right = np.random.randint(2)
+        slope = (top_or_bot * image.shape[0] - y_intercept) / (x_intercept - left_or_right * image.shape[1])
+        intercept = y_intercept if not left_or_right else y_intercept - slope * image.shape[1]
+
+        # Get measurement
+        
+        for j in range(image.shape[1]):
+            for i in range(int(floor(slope*j+intercept)), int(ceil(slope*(j+1)+intercept))+1):
+                if 0 <= i and i < image.shape[0]:
+                    measurement_rows.append( measurements_made )
+                    measurement_cols.append( array_index_to_vec_index((i,j)) )
+                    intensity += image[i][j]
+
+    elif measurement_type is "circle":
+        x_center = image.shape[1] * np.random.rand()
+        y_center = image.shape[0] * np.random.rand()
+
+        print x_center, y_center
+        
+        for j in range(int(floor(x_center-radius)), int(ceil(x_center+radius))+1):
+            for i in range(int(floor(y_center-radius)), int(ceil(y_center+radius))+1):
+                if (i + 0.5 - y_center)**2 + (j + 0.5 - x_center)**2 <= radius**2 and 0 <= min(i,j) and i < image.shape[0] and j < image.shape[1]:
+                    measurement_rows.append( measurements_made )
+                    measurement_cols.append( array_index_to_vec_index((i,j)) )
+                    intensity += image[i][j]
+
+    else:
+        raise NotImplementedError    
 
     measurements_made += 1
     intensities.append( intensity )
