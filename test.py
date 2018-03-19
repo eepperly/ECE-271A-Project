@@ -103,6 +103,7 @@ optimal = basis_pursuit_exact(matrices, vector)
 optimal_norm = np.linalg.norm(optimal, ord=1)
 
 vector_norm = np.linalg.norm(vector, ord=1)
+R = np.hstack(matrices)
 
 fName = "results.dat"
 

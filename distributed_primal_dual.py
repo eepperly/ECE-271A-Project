@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import numpy as np
+
 class DistributedProblem(object):
 
     def __init__(self, smooth_funcs, non_smooth_funcs, constraint_matrices, constraint_vectors, graph, cone):
@@ -18,7 +20,7 @@ class DistributedProblem(object):
         assert self.size == len(self.constraint_matrices)
         assert self.size == len(self.graph)
         
-    def solve(self, num_iters, initial_primal_guess, initial_dual_guess, gamma, taus, kappas, debug_output=False):
+    def solve(self, num_iters, initial_primal_guess, initial_dual_guess, gamma, taus, kappas, debug_output=False, return_average=True):
 
         assert self.size == len(taus)
         assert self.size == len(kappas)
@@ -126,4 +128,34 @@ class DistributedProblem(object):
             s = new_s
             new_s = []
 
-        return primal, dual, primal_history, dual_history
+        if return_average:
+            # Convert to averages
+            new_primal_history = []
+            new_dual_history = []
+
+            primal_sums = [np.zeros(my_primal.shape) for my_primal in primal]
+            dual_sums = [np.zeros(my_dual.shape) for my_dual in dual]
+
+            for i in range(len(primal_history)):
+
+                primal = primal_history[i]
+                dual = dual_history[i]
+
+                primal_average = []
+                dual_average = []
+
+                for j in range(len(primal)):
+
+                    primal_sums[j] += primal[j]
+                    dual_sums[j] += dual[j]
+
+                    primal_average.append( primal_sums[j] / float(i+1) )
+                    dual_average.append( dual_sums[j] / float(i+1) )
+
+                new_primal_history.append( primal_average )
+                new_dual_history.append( dual_average )
+
+            return new_primal_history[-1], new_dual_history[-1], new_primal_history, new_dual_history
+
+        else:
+            return primal, dual, primal_history, dual_history

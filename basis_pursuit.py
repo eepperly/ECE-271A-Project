@@ -7,7 +7,7 @@ from cone import ZeroCone
 
 import numpy as np
 
-def basis_pursuit( matrices, vector, graph, num_iters=10, solver_param=0.1, gamma=0.1, debug_output=False, non_smooth_one_norm=True, cautious=False ):
+def basis_pursuit( matrices, vector, graph, num_iters=10, solver_param=0.1, gamma=0.1, debug_output=False, non_smooth_one_norm=True, cautious=False, average=True ):
 
     n = len(matrices)
 
@@ -33,9 +33,9 @@ def basis_pursuit( matrices, vector, graph, num_iters=10, solver_param=0.1, gamm
         initial_primal_guess.append( np.zeros( (matrices[i].shape[1], 1) ) )
         initial_dual_guess.append( np.zeros( (matrices[i].shape[0], 1) ) )
 
-    return basis_pursuit_solver(matrices, vectors, gamma, taus, kappas, graph, initial_primal_guess, initial_dual_guess, num_iters, debug_output=debug_output, non_smooth_one_norm=non_smooth_one_norm)
+    return basis_pursuit_solver(matrices, vectors, gamma, taus, kappas, graph, initial_primal_guess, initial_dual_guess, num_iters, debug_output=debug_output, non_smooth_one_norm=non_smooth_one_norm, average=average)
 
-def basis_pursuit_solver(matrices, vectors, gamma, taus, kappas, graph, initial_primal_guess, initial_dual_guess, num_iters, debug_output=False, non_smooth_one_norm=True):
+def basis_pursuit_solver(matrices, vectors, gamma, taus, kappas, graph, initial_primal_guess, initial_dual_guess, num_iters, debug_output=False, non_smooth_one_norm=True, average=True):
 
     n = len(matrices)
     
@@ -59,7 +59,7 @@ def basis_pursuit_solver(matrices, vectors, gamma, taus, kappas, graph, initial_
 
     basis_pursuit_problem = DistributedProblem(smooth_funcs, non_smooth_funcs, matrices, vectors, graph, cone)
 
-    return basis_pursuit_problem.solve(num_iters, initial_primal_guess, initial_dual_guess, gamma, taus, kappas, debug_output=debug_output)
+    return basis_pursuit_problem.solve(num_iters, initial_primal_guess, initial_dual_guess, gamma, taus, kappas, debug_output=debug_output, return_average=average)
 
 def basis_pursuit_exact(matrices, vector):
 

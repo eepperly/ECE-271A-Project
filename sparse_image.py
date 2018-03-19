@@ -22,6 +22,7 @@ parser.add_argument("--image_file", help="which file to load for image", type=st
 parser.add_argument("--graph_density", help="fraction of possible edges that will be filled", type=float, default=0.2)
 parser.add_argument("--measurement_type", help="type of measurement, either 'line' or 'circle'", type=str, default="circle")
 parser.add_argument("--circle_radius", help="radius of circle for circular measurement", type=float, default=4.0)
+parser.add_argument("--average", help="whether or not to average the results", type=str, default=True)
 
 args = parser.parse_args()
 
@@ -40,6 +41,8 @@ if gamma is None:
 solver_param = args.solver_param
 measurement_type = args.measurement_type
 radius = args.circle_radius
+
+average = args.average
 
 assert measurement_type in ["circle", "line"]
 
@@ -124,7 +127,7 @@ matrices = [big_matrix[:,i*(num_values//num_agents):(i+1)*(num_values//num_agent
 
 graph = generate_graph( num_agents, graph_density=graph_density )
 
-primal, dual, primal_history, dual_history = basis_pursuit( matrices, big_vector, graph, num_iters=num_steps, solver_param=solver_param, gamma=gamma, non_smooth_one_norm=True, debug_output=False )
+primal, dual, primal_history, dual_history = basis_pursuit( matrices, big_vector, graph, num_iters=num_steps, solver_param=solver_param, gamma=gamma, non_smooth_one_norm=True, debug_output=False, average=average )
 
 final_image = np.vstack(primal).reshape(image.shape[0], image.shape[1])
 final_image = np.maximum( final_image, np.zeros(final_image.shape) )
@@ -141,3 +144,24 @@ image = optimal.reshape(image.shape[0], image.shape[1])
 plt.imshow(image, cmap='gray')
 plt.show()
 write_array("cvx_image.dat", image)
+
+# Output for analysis
+optimal_norm = np.linalg.norm(optimal, ord=1)
+vector_norm = np.linalg.norm(big_vector, ord=1)
+
+fName = "results.dat"
+
+with open(fName, "w") as write_file:
+    for i in range(len(primal_history)):
+
+        primal_val = np.vstack(primal_history[i])
+        optimality = (np.linalg.norm(primal_val, ord=1) - optimal_norm)/optimal_norm
+        infeasibility = np.linalg.norm( big_matrix*primal_val - big_vector, ord=1 ) / vector_norm
+
+        import itertools
+        dual_consensus = -np.inf
+        for j, k in itertools.combinations(range(num_agents), 2):
+            dual_consensus = max(dual_consensus, np.linalg.norm(dual_history[i][j] - dual_history[i][k], ord=1))
+
+        write_file.write("{:18}\t{:18}\t{:18}\n".format(optimality, infeasibility, dual_consensus))
+
